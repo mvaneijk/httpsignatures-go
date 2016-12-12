@@ -10,7 +10,7 @@ const (
 	testSignature         = `keyId="Test",algorithm="hmac-sha256",signature="JldXnt8W9t643M2Sce10gqCh/+E7QIYLiI+bSjnFBGCti7s+mPPvOjVb72sbd1FjeOUwPTDpKbrQQORrm+xBYfAwCxF3LBSSzORvyJ5nRFCFxfJ3nlQD6Kdxhw8wrVZX5nSem4A/W3C8qH5uhFTRwF4ruRjh+ENHWuovPgO/HGQ="`
 	testHash              = `JldXnt8W9t643M2Sce10gqCh/+E7QIYLiI+bSjnFBGCti7s+mPPvOjVb72sbd1FjeOUwPTDpKbrQQORrm+xBYfAwCxF3LBSSzORvyJ5nRFCFxfJ3nlQD6Kdxhw8wrVZX5nSem4A/W3C8qH5uhFTRwF4ruRjh+ENHWuovPgO/HGQ=`
 	testKey               = "U29tZXRoaW5nUmFuZG9t"
-	testDate              = "Thu, 05 Jan 2012 21:31:40 GMT"
+	testDate              = "Thu, 05 Jan 2014 21:31:40 GMT"
 	testKeyID             = "Test"
 	testEd25519PrivateKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA7aie8zrakLWKjqNAqbw1zZTIVdx3iQ6Y6wEihi1naKQ=="
 	testEd25519PublicKey  = "O2onvM62pC1io6jQKm8Nc2UyFXcd4kOmOsBIoYtZ2ik="
@@ -113,6 +113,30 @@ func TestValidEd25119RequestIsValid(t *testing.T) {
 		},
 	}
 	err := DefaultEd25519Signer.SignRequest(testKeyID, testEd25519PrivateKey, r)
+	assert.Nil(t, err)
+
+	sig, err := FromRequest(r)
+	assert.Nil(t, err)
+
+	res, err := sig.Verify(testEd25519PublicKey, r)
+	assert.True(t, res)
+	assert.Nil(t, err)
+}
+
+func TestVerifyEd25119Request(t *testing.T) {
+	r := &http.Request{
+		Header: http.Header{
+			"Date":         []string{testDate},
+			"Host":         []string{"example.com"},
+			"Content-Type": []string{"application/json"},
+		},
+	}
+	r.Method = http.MethodPost
+	r.RequestURI = "/foo?param=value&pet=dog"
+
+	FullEd25519Signer := NewSigner(AlgorithmEd25519, RequestTarget, "date", "host")
+
+	err := FullEd25519Signer.SignRequest(testEd25519PublicKey, testEd25519PrivateKey, r)
 	assert.Nil(t, err)
 
 	sig, err := FromRequest(r)
